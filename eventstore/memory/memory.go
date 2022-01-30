@@ -80,7 +80,7 @@ func (e *Memory) Close() error {
 	return nil
 }
 
-// aggregateKey generate a aggregate key to store events against from aggregateType and aggregateID
+// aggregateKey generate an aggregate key to store events against from aggregateType and aggregateID
 func aggregateKey(aggregateType, aggregateID string) string {
 	return aggregateType + "_" + aggregateID
 }

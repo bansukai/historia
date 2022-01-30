@@ -85,8 +85,7 @@ func Test_AggregateRoot_update_should_set_version_to_last_event_and_clear_events
 	p.update()
 	assert.Equal(t, Version(20), p.Version())
 
-	p.events = append(p.events, Event{Version: 5})
-	p.events = append(p.events, Event{Version: 6})
+	p.events = append(p.events, Event{Version: 5}, Event{Version: 6})
 	p.update()
 
 	assert.Equal(t, Version(6), p.Version())
@@ -116,7 +115,7 @@ func (p *aggAgg) Transition(evt Event) {
 		p.age = 0
 		p.name = e.Name
 	case *agedOneYear:
-		p.age += 1
+		p.age++
 	}
 }
 

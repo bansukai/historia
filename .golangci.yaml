@@ -1,0 +1,48 @@
+run:
+  deadline: 10m
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+      - style
+    disabled-tags:
+      - opinionated
+    disabled-checks:
+      - hugeParam
+
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 15
+
+  gocognit:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 15
+
+linters:
+  enable:
+    - megacheck
+    - govet
+    - revive
+    - misspell
+    - depguard
+    - gofmt
+    - varcheck
+    - gosimple
+    - gocyclo
+    - gocognit
+    - gocritic
+    - tparallel
+    - unconvert
+  disable:
+    - unused
+  fast: false
+
+# output configuration options
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

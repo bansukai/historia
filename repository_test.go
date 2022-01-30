@@ -136,6 +136,8 @@ func (r *repoAggregate) Transition(evt Event) {
 	switch e := evt.Data.(type) {
 	case *repoEvent1:
 		r.name = e.Name
+	default:
+
 	}
 }
 

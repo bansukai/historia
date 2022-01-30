@@ -21,8 +21,8 @@ type Snapshot struct {
 }
 
 type SnapshotStore interface {
-	Get(id string, t string) (Snapshot, error)
-	Save(ss Snapshot) error
+	Get(id string, t string) (*Snapshot, error)
+	Save(ss *Snapshot) error
 }
 
 type SnapshotBody interface{}
@@ -63,11 +63,11 @@ func (s *Snapper) Get(aggregateID string, a Aggregate) error {
 	}
 
 	var state SnapshotBody
-	if err = s.marshaller.Unmarshal(snap.State, &state); err != nil {
+	if err := s.marshaller.Unmarshal(snap.State, &state); err != nil {
 		return err
 	}
 
-	if err = st.ApplySnapshot(&state); err != nil {
+	if err := st.ApplySnapshot(&state); err != nil {
 		return err
 	}
 
@@ -107,7 +107,7 @@ func (s *Snapper) Save(a Aggregate) error {
 		State:     buf,
 	}
 
-	return s.store.Save(snap)
+	return s.store.Save(&snap)
 }
 
 // validate make sure the aggregate is valid to be saved

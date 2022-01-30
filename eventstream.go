@@ -50,34 +50,16 @@ func (e *EventStream) Update(aggregate Aggregate, events []Event) {
 
 	for _, event := range events {
 		// call all functions that has registered for all events
-		for _, s := range e.allEvents {
-			s.f(event)
-		}
+		updateAll(e, event)
 
 		// call all functions that has registered for the specific event
-		t := reflect.TypeOf(event.Data)
-		if subs, ok := e.specificEvents[t]; ok {
-			for _, s := range subs {
-				s.f(event)
-			}
-		}
+		updateSpecificEvent(e, event)
 
-		ref := formatAggregatePathType(aggregate)
 		// call all functions that has registered for the aggregate type events
-		if subs, ok := e.aggregateTypes[ref]; ok {
-			for _, s := range subs {
-				s.f(event)
-			}
-		}
+		updateSpecificAggregateEvents(aggregate, e, event)
 
 		// call all functions that has registered for the aggregate type and ID events
-		// ref also include the package name ensuring that Aggregate Types can have the same name.
-		ref = formatAggregatePathNameID(aggregate)
-		if subs, ok := e.specificAggregates[ref]; ok {
-			for _, s := range subs {
-				s.f(event)
-			}
-		}
+		updateSpecificAggregate(aggregate, e, event)
 	}
 }
 
@@ -199,16 +181,49 @@ func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...interfa
 	return &s
 }
 
-func formatAggregatePathType(a Aggregate) string {
-	name := reflect.TypeOf(a).Elem().Name()
-	root := a.Root()
+func updateAll(stream *EventStream, event Event) {
+	for _, s := range stream.allEvents {
+		s.f(event)
+	}
+}
+
+func updateSpecificEvent(stream *EventStream, event Event) {
+	t := reflect.TypeOf(event.Data)
+	if subs, ok := stream.specificEvents[t]; ok {
+		for _, s := range subs {
+			s.f(event)
+		}
+	}
+}
+
+func updateSpecificAggregateEvents(aggregate Aggregate, stream *EventStream, event Event) {
+	ref := formatAggregatePathType(aggregate)
+	if subs, ok := stream.aggregateTypes[ref]; ok {
+		for _, s := range subs {
+			s.f(event)
+		}
+	}
+}
+
+func updateSpecificAggregate(aggregate Aggregate, stream *EventStream, event Event) {
+	ref := formatAggregatePathNameID(aggregate)
+	if subs, ok := stream.specificAggregates[ref]; ok {
+		for _, s := range subs {
+			s.f(event)
+		}
+	}
+}
+
+func formatAggregatePathType(aggregate Aggregate) string {
+	name := reflect.TypeOf(aggregate).Elem().Name()
+	root := aggregate.Root()
 	ref := fmt.Sprintf("%s/%s", root.path(), name)
 	return ref
 }
 
-func formatAggregatePathNameID(a Aggregate) string {
-	name := reflect.TypeOf(a).Elem().Name()
-	root := a.Root()
+func formatAggregatePathNameID(aggregate Aggregate) string {
+	name := reflect.TypeOf(aggregate).Elem().Name()
+	root := aggregate.Root()
 	ref := fmt.Sprintf("%s/%s/%s", root.path(), name, root.ID())
 	return ref
 }

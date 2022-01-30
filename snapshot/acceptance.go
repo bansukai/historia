@@ -15,7 +15,7 @@ func AcceptanceTestSnapshotStore(t *testing.T, snapshot historia.SnapshotStore) 
 		State:   []byte{},
 	}
 
-	assert.NoError(t, snapshot.Save(expected))
+	assert.NoError(t, snapshot.Save(&expected))
 
 	_, err := snapshot.Get("bogus", "bogus")
 	assert.ErrorIs(t, err, historia.ErrSnapshotNotFound)

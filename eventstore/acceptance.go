@@ -18,15 +18,6 @@ func AcceptanceTest(t *testing.T, eventStore hi.EventStore) {
 		run   func(es hi.EventStore) error
 	}{
 		{"should save and get events", saveAndGetEvents},
-		//{"should get events after version", getEventsAfterVersion},
-		//{"should not save events from different aggregates", saveEventsFromMoreThanOneAggregate},
-		//{"should not save events from different aggregate types", saveEventsFromMoreThanOneAggregateType},
-		//{"should not save events in wrong order", saveEventsInWrongOrder},
-		//{"should not save events in wrong version", saveEventsInWrongVersion},
-		//{"should not save event with no reason", saveEventsWithEmptyReason},
-		//{"should save and get event concurrently", saveAndGetEventsConcurrently},
-		//{"should return error when no events", getErrWhenNoEvents},
-		//{"should get global event order from save", saveReturnGlobalEventOrder},
 	}
 
 	for _, test := range tests {
@@ -36,6 +27,7 @@ func AcceptanceTest(t *testing.T, eventStore hi.EventStore) {
 	}
 }
 
+//nolint:gocyclo // it's complicated
 func saveAndGetEvents(es hi.EventStore) error {
 	aggregateID := idFunc()
 	events := createEvents(aggregateID)
@@ -111,17 +103,9 @@ func saveAndGetEvents(es hi.EventStore) error {
 	return nil
 }
 
-var idFunc = func() string { return uuid.NewString() }
+var idFunc = uuid.NewString
 var aggregateType = ""
 var timestamp = time.Now()
-
-type status int
-
-const (
-	statusOne   = status(iota)
-	statusTwo   = status(iota)
-	statusThree = status(iota)
-)
 
 type acceptanceAggregate struct {
 	hi.AggregateRoot
@@ -130,13 +114,13 @@ type acceptanceAggregate struct {
 func (a *acceptanceAggregate) Transition(evt hi.Event) {}
 
 type eventCreated struct {
-	AccountId     string
+	AccountID     string
 	OpeningValue  int
 	OpeningPoints int
 }
 
 type eventMatched struct {
-	NewStatus status
+	NewStatus int
 }
 
 type eventTaken struct {
@@ -152,8 +136,8 @@ func createEventsWithID(aggregateID string) []hi.Event {
 	metadata := make(map[string]interface{})
 	metadata["test"] = "hello"
 	history := []hi.Event{
-		{AggregateID: aggregateID, Version: 1, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventCreated{AccountId: "1234567", OpeningValue: 10000, OpeningPoints: 0}, Metadata: metadata},
-		{AggregateID: aggregateID, Version: 2, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventMatched{NewStatus: statusTwo}, Metadata: metadata},
+		{AggregateID: aggregateID, Version: 1, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventCreated{AccountID: "1234567", OpeningValue: 10000, OpeningPoints: 0}, Metadata: metadata},
+		{AggregateID: aggregateID, Version: 2, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventMatched{NewStatus: 3}, Metadata: metadata},
 		{AggregateID: aggregateID, Version: 3, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventTaken{ValueAdded: 2525, PointsAdded: 5}, Metadata: metadata},
 		{AggregateID: aggregateID, Version: 4, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventTaken{ValueAdded: 2512, PointsAdded: 5}, Metadata: metadata},
 		{AggregateID: aggregateID, Version: 5, AggregateType: aggregateType, Timestamp: timestamp, Data: &eventTaken{ValueAdded: 5600, PointsAdded: 5}, Metadata: metadata},

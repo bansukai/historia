@@ -24,11 +24,6 @@ type Aggregate interface {
 	Transition(evt Event)
 }
 
-type SnapshotTaker interface {
-	TakeSnapshot() (interface{}, error)
-	ApplySnapshot(state interface{}) error
-}
-
 type SnapShooter interface {
 	Get(aggregateID string, a Aggregate) error
 	Save(a Aggregate) error

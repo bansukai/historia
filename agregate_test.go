@@ -105,7 +105,6 @@ type aggAgg struct {
 
 	name string
 	age  int
-	dead int
 }
 
 type born struct{ Name string }

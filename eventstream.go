@@ -18,19 +18,19 @@ func NewEventStream() *EventStream {
 
 // Subscription holding the subscribe / unsubscribe / and func to be called when event matches the subscription
 type Subscription struct {
-	f      func(e Event)
-	unsubF func()
-	subF   func()
+	f func(e Event)
+	u func()
+	s func()
 }
 
 // Unsubscribe invokes the unsubscribe function
 func (s *Subscription) Unsubscribe() {
-	s.unsubF()
+	s.u()
 }
 
 // Subscribe invokes the subscribe function
 func (s *Subscription) Subscribe() {
-	s.subF()
+	s.s()
 }
 
 // EventStream holds event subscriptions
@@ -68,7 +68,7 @@ func (e *EventStream) SubscriberAll(f func(e Event)) *Subscription {
 	s := Subscription{
 		f: f,
 	}
-	s.unsubF = func() {
+	s.u = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -79,7 +79,7 @@ func (e *EventStream) SubscriberAll(f func(e Event)) *Subscription {
 			}
 		}
 	}
-	s.subF = func() {
+	s.s = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -93,7 +93,7 @@ func (e *EventStream) SubscriberSpecificAggregate(f func(e Event), aggregates ..
 	s := Subscription{
 		f: f,
 	}
-	s.unsubF = func() {
+	s.u = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -107,7 +107,7 @@ func (e *EventStream) SubscriberSpecificAggregate(f func(e Event), aggregates ..
 			}
 		}
 	}
-	s.subF = func() {
+	s.s = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -124,7 +124,7 @@ func (e *EventStream) SubscriberAggregateType(f func(e Event), aggregates ...Agg
 	s := Subscription{
 		f: f,
 	}
-	s.unsubF = func() {
+	s.u = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -138,7 +138,7 @@ func (e *EventStream) SubscriberAggregateType(f func(e Event), aggregates ...Agg
 			}
 		}
 	}
-	s.subF = func() {
+	s.s = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -155,7 +155,7 @@ func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...interfa
 	s := Subscription{
 		f: f,
 	}
-	s.unsubF = func() {
+	s.u = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -169,7 +169,7 @@ func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...interfa
 			}
 		}
 	}
-	s.subF = func() {
+	s.s = func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 

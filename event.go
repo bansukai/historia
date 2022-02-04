@@ -9,9 +9,6 @@ import (
 var (
 	// ErrNoEvents when there is no events to get
 	ErrNoEvents = errors.New("no events")
-
-	// ErrNoMoreEvents when iterator has no more events to deliver
-	ErrNoMoreEvents = errors.New("no more events")
 )
 
 type EventData interface{}

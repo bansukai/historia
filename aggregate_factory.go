@@ -23,7 +23,7 @@ type AggregateFactory interface {
 	// Examples:
 	// 	func(id string) Aggregate { return NewMyAggregateType(id) }
 	// 	func(id string) Aggregate { return &MyAggregateType{AggregateBase:NewAggregateBase(id)} }
-	RegisterDelegate(delegate func(string) Aggregate) error
+	RegisterDelegate(delegate func(id string) Aggregate) error
 }
 
 // AggregateRepository defines a contract for loading aggregates from the event history

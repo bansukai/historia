@@ -11,29 +11,33 @@ var (
 	ErrAggregateNotValid         = errors.New("aggregate is nil")
 )
 
-type AggregateRoot interface {
-	ID() string
-	Version() Version
-	Events() []Event
-}
-
 // AggregateFactory returns aggregate instances of a specified type with the
 // AggregateID set to the provided value.
 type AggregateFactory interface {
-	New(aggregate AggregateRoot, id string) (AggregateRoot, error)
+	Get(aggregate Aggregate, id string) (Aggregate, error)
+}
+
+// AggregateRepository defines a contract for loading aggregates from the event history
+type AggregateRepository interface {
+	// Get fetches the aggregates event and builds up the aggregate
+	// If there is a snapshot store, try to fetch a snapshot of the aggregate and
+	// event after the version of the aggregate, if any.
+	Get(id string, aggregate Aggregate) error
 }
 
 // NewAggregateFactory returns a new AggFactory
-func NewAggregateFactory() *AggFactory {
+func NewAggregateFactory(repository AggregateRepository) *AggFactory {
 	return &AggFactory{
-		delegates: make(map[string]func(string) AggregateRoot),
+		repository: repository,
+		delegates:  make(map[string]func(string) Aggregate),
 	}
 }
 
 // AggFactory is an implementation of the AggregateFactory interface
 // that supports registration of delegate functions to perform aggregate instantiation.
 type AggFactory struct {
-	delegates map[string]func(string) AggregateRoot
+	repository AggregateRepository
+	delegates  map[string]func(string) Aggregate
 }
 
 // RegisterDelegate is used to register a new function for instantiation of an aggregate.
@@ -41,7 +45,7 @@ type AggFactory struct {
 // Examples:
 // 	func(id string) AggregateBase { return NewMyAggregateType(id) }
 // 	func(id string) AggregateBase { return &MyAggregateType{AggregateBase:NewAggregateBase(id)} }
-func (f *AggFactory) RegisterDelegate(delegate func(string) AggregateRoot) error {
+func (f *AggFactory) RegisterDelegate(delegate func(string) Aggregate) error {
 	aggregate := delegate("_not_an_id_")
 	if aggregate == nil {
 		return ErrDelegateFuncNotValid
@@ -56,17 +60,25 @@ func (f *AggFactory) RegisterDelegate(delegate func(string) AggregateRoot) error
 	return nil
 }
 
-// New calls the delegate for the type specified and returns the result.
-func (f *AggFactory) New(aggregate AggregateRoot, id string) (AggregateRoot, error) {
-	if aggregate == nil {
+// Get uses the registered delegate for the Aggregate and attempts to load
+// its history from the AggregateRepository.
+func (f *AggFactory) Get(agType Aggregate, id string) (Aggregate, error) {
+	if agType == nil {
 		return nil, ErrAggregateNotValid
 	}
 
-	name := TypeOf(aggregate)
+	name := TypeOf(agType)
 	delegate, ok := f.delegates[name]
 	if !ok {
 		return nil, ErrDelegateNotRegistered
 	}
 
-	return delegate(id), nil
+	aggregate := delegate(id)
+	if err := f.repository.Get(id, aggregate); err != nil {
+		if !errors.Is(err, ErrAggregateNotFound) {
+			return nil, err
+		}
+	}
+
+	return aggregate, nil
 }

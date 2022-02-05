@@ -2,7 +2,6 @@ package historia
 
 import (
 	"errors"
-	"reflect"
 	"time"
 )
 
@@ -30,5 +29,5 @@ func (e Event) Reason() string {
 	if e.Data == nil {
 		return ""
 	}
-	return reflect.TypeOf(e.Data).Elem().Name()
+	return TypeOf(e.Data)
 }

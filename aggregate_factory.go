@@ -2,7 +2,6 @@ package historia
 
 import (
 	"errors"
-	"reflect"
 )
 
 var (
@@ -48,7 +47,7 @@ func (f *AggFactory) RegisterDelegate(delegate func(string) AggregateRoot) error
 		return ErrDelegateFuncNotValid
 	}
 
-	typeName := typeOf(aggregate)
+	typeName := TypeOf(aggregate)
 	if _, ok := f.delegates[typeName]; ok {
 		return ErrDelegateAlreadyRegistered
 	}
@@ -63,16 +62,11 @@ func (f *AggFactory) New(aggregate AggregateRoot, id string) (AggregateRoot, err
 		return nil, ErrAggregateNotValid
 	}
 
-	name := typeOf(aggregate)
+	name := TypeOf(aggregate)
 	delegate, ok := f.delegates[name]
 	if !ok {
 		return nil, ErrDelegateNotRegistered
 	}
 
 	return delegate(id), nil
-}
-
-// typeOf is a convenience function that returns the name of a type
-func typeOf(i interface{}) string {
-	return reflect.TypeOf(i).Elem().Name()
 }

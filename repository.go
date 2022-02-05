@@ -2,7 +2,6 @@ package historia
 
 import (
 	"errors"
-	"reflect"
 )
 
 var (
@@ -58,7 +57,7 @@ func (r *Repository) Get(id string, aggregate Aggregate) error {
 
 	// fetch events after the current version of the aggregate that could be fetched from the snapshot store
 	root := aggregate.Root()
-	aggregateType := reflect.TypeOf(aggregate).Elem().Name()
+	aggregateType := TypeOf(aggregate)
 	events, err := r.eventStore.Get(id, aggregateType, root.Version())
 	if err != nil {
 		if !errors.Is(err, ErrNoEvents) {

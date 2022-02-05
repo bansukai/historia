@@ -2,7 +2,6 @@ package historia
 
 import (
 	"errors"
-	"reflect"
 )
 
 // ErrAggregateAlreadyExists returned if the aggregateID is set more than one time
@@ -80,7 +79,7 @@ func (a *AggregateBase) TrackChangeWithMetadata(aggregate Aggregate, data interf
 		a.id = idFunc()
 	}
 
-	name := reflect.TypeOf(aggregate).Elem().Name()
+	name := TypeOf(aggregate)
 	event := Event{
 		AggregateID:   a.id,
 		Version:       a.nextVersion(),
@@ -132,5 +131,5 @@ func (a *AggregateBase) update() {
 // path return the full name of the aggregate making it unique to other aggregates with
 // the same name but placed in other packages.
 func (a *AggregateBase) path() string {
-	return reflect.TypeOf(a).Elem().PkgPath()
+	return PathOf(a)
 }

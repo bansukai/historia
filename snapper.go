@@ -2,7 +2,6 @@ package historia
 
 import (
 	"errors"
-	"reflect"
 	"time"
 )
 
@@ -56,7 +55,7 @@ func (s *Snapper) Get(aggregateID string, a Aggregate) error {
 		return ErrAggregateDoesntSupportSnapshots
 	}
 
-	t := reflect.TypeOf(a).Elem().Name()
+	t := TypeOf(a)
 	snap, err := s.store.Get(aggregateID, t)
 	if err != nil {
 		return err
@@ -93,7 +92,7 @@ func (s *Snapper) Save(a Aggregate) error {
 		return nil
 	}
 
-	typ := reflect.TypeOf(a).Elem().Name()
+	typ := TypeOf(a)
 	buf, err := s.marshaller.Marshal(payload)
 	if err != nil {
 		return err

@@ -215,14 +215,14 @@ func updateSpecificAggregate(aggregate Aggregate, stream *EventStream, event Eve
 }
 
 func formatAggregatePathType(aggregate Aggregate) string {
-	name := reflect.TypeOf(aggregate).Elem().Name()
+	name := TypeOf(aggregate)
 	root := aggregate.Root()
 	ref := fmt.Sprintf("%s/%s", root.path(), name)
 	return ref
 }
 
 func formatAggregatePathNameID(aggregate Aggregate) string {
-	name := reflect.TypeOf(aggregate).Elem().Name()
+	name := TypeOf(aggregate)
 	root := aggregate.Root()
 	ref := fmt.Sprintf("%s/%s/%s", root.path(), name, root.ID())
 	return ref

@@ -7,6 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_NewAggregateBase_should_return_instance(t *testing.T) {
+	id := "dd"
+	ab := NewAggregateBase(id)
+	assert.Equal(t, id, ab.ID())
+	assert.Equal(t, Version(0), ab.Version())
+	assert.NotNil(t, ab.events)
+}
+
 func Test_AggregateBase_TrackChange_should_add_and_transition_event(t *testing.T) {
 	now := time.Now()
 	id := "cupcakes"

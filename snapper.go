@@ -36,6 +36,7 @@ type Marshaller interface {
 	Unmarshal(data []byte, v interface{}) error
 }
 
+// NewSnapper creates and returns an instance of Snapper
 func NewSnapper(ss SnapshotStore, m Marshaller) *Snapper {
 	return &Snapper{
 		store:      ss,
@@ -43,13 +44,13 @@ func NewSnapper(ss SnapshotStore, m Marshaller) *Snapper {
 	}
 }
 
-// Snapper gets and saves snapshots
+// Snapper saves/applies snapshots to/from Aggregate
 type Snapper struct {
 	store      SnapshotStore
 	marshaller Marshaller
 }
 
-func (s *Snapper) Get(aggregateID string, a Aggregate) error {
+func (s *Snapper) ApplySnapshot(aggregateID string, a Aggregate) error {
 	st, ok := a.(SnapshotTaker)
 	if !ok {
 		return ErrAggregateDoesntSupportSnapshots
@@ -75,8 +76,7 @@ func (s *Snapper) Get(aggregateID string, a Aggregate) error {
 	return nil
 }
 
-// Save requests a snapshot from the Aggregate, it must implement the SnapshotTaker interface.
-func (s *Snapper) Save(a Aggregate) error {
+func (s *Snapper) SaveSnapshot(a Aggregate) error {
 	root := a.Root()
 	if err := validate(*root); err != nil {
 		return err

@@ -16,7 +16,7 @@ func Test_NewRepository_should_return_valid_instance(t *testing.T) {
 	assert.Equal(t, snapMock, repo.snapper)
 }
 
-func Test_Repository_Save_should_return_eventStore_error(t *testing.T) {
+func Test_Repo_Save_should_return_eventStore_error(t *testing.T) {
 	e := errors.New("it went boom")
 	esMock := &eventStoreMocker{
 		save: func(events []Event) error { return e },
@@ -30,7 +30,7 @@ func Test_Repository_Save_should_return_eventStore_error(t *testing.T) {
 	assert.ErrorIs(t, repo.Save(&p1), e)
 }
 
-func Test_Repository_Save_should_call_eventStore_Update(t *testing.T) {
+func Test_Repo_Save_should_call_eventStore_Update(t *testing.T) {
 	esMock := &eventStoreMocker{
 		save: func(events []Event) error { return nil },
 	}
@@ -51,16 +51,16 @@ func Test_Repository_Save_should_call_eventStore_Update(t *testing.T) {
 	assert.Len(t, p1.Events(), 0)
 }
 
-func Test_Repository_Get_should_return_error_when_snapper_fails(t *testing.T) {
+func Test_Repo_Get_should_return_error_when_snapper_fails(t *testing.T) {
 	err := errors.New("well no")
 	sn := &snapMocker{
-		get: func(id string, a Aggregate) error { return err },
+		apply: func(id string, a Aggregate) error { return err },
 	}
 	repo := NewRepository(nil, sn)
 	assert.ErrorIs(t, repo.Get("asd", &repoAggregate{}), err)
 }
 
-func Test_Repository_Get_should_return_error_when_eventStore_fails(t *testing.T) {
+func Test_Repo_Get_should_return_error_when_eventStore_fails(t *testing.T) {
 	err := errors.New("well no")
 	es := &eventStoreMocker{
 		get: func(string, string, Version) ([]Event, error) {
@@ -68,26 +68,26 @@ func Test_Repository_Get_should_return_error_when_eventStore_fails(t *testing.T)
 		},
 	}
 	sn := &snapMocker{
-		get: func(string, Aggregate) error { return nil },
+		apply: func(string, Aggregate) error { return nil },
 	}
 	repo := NewRepository(es, sn)
 	assert.ErrorIs(t, repo.Get("asd", &repoAggregate{}), err)
 }
 
-func Test_Repository_Get_should_return_error_when_eventStore_has_no_events_but_root_is_version_zero(t *testing.T) {
+func Test_Repo_Get_should_return_error_when_eventStore_has_no_events_but_root_is_version_zero(t *testing.T) {
 	es := &eventStoreMocker{
 		get: func(string, string, Version) ([]Event, error) {
 			return nil, ErrNoEvents
 		},
 	}
 	sn := &snapMocker{
-		get: func(string, Aggregate) error { return nil },
+		apply: func(string, Aggregate) error { return nil },
 	}
 	repo := NewRepository(es, sn)
 	assert.ErrorIs(t, repo.Get("asd", &repoAggregate{}), ErrAggregateNotFound)
 }
 
-func Test_Repository_Get_should_build_aggregate_from_history(t *testing.T) {
+func Test_Repo_Get_should_build_aggregate_from_history(t *testing.T) {
 	events := []Event{
 		{Version: 1, Data: &repoEvent1{Name: "Poo"}, AggregateType: "repoAggregate"},
 		{Version: 2, Data: &repoEvent1{Name: "Happy"}, AggregateType: "repoAggregate"},
@@ -100,7 +100,7 @@ func Test_Repository_Get_should_build_aggregate_from_history(t *testing.T) {
 	}
 
 	sn := &snapMocker{
-		get: func(string, Aggregate) error { return nil },
+		apply: func(string, Aggregate) error { return nil },
 	}
 
 	repo := NewRepository(es, sn)
@@ -111,12 +111,12 @@ func Test_Repository_Get_should_build_aggregate_from_history(t *testing.T) {
 	assert.Equal(t, "Happy", ag.name)
 }
 
-func Test_Repository_SaveSnapshot_should_return_error_if_no_snapper(t *testing.T) {
+func Test_Repo_SaveSnapshot_should_return_error_if_no_snapper(t *testing.T) {
 	r := NewRepository(nil, nil)
 	assert.ErrorIs(t, r.SaveSnapshot(&repoAggregate{}), ErrNoSnapShotInitialized)
 }
 
-func Test_Repository_SaveSnapshot_should_call_snapshot_save(t *testing.T) {
+func Test_Repo_SaveSnapshot_should_call_snapshot_save(t *testing.T) {
 	err := errors.New("failed")
 	sn := &snapMocker{
 		save: func(a Aggregate) error { return err },
@@ -164,15 +164,15 @@ func (e *eventStoreMocker) Close() error {
 }
 
 type snapMocker struct {
-	get  func(id string, a Aggregate) error
-	save func(a Aggregate) error
+	apply func(id string, a Aggregate) error
+	save  func(a Aggregate) error
 }
 
-func (s *snapMocker) Get(id string, a Aggregate) error {
-	return s.get(id, a)
+func (s *snapMocker) ApplySnapshot(id string, a Aggregate) error {
+	return s.apply(id, a)
 }
 
-func (s *snapMocker) Save(a Aggregate) error {
+func (s *snapMocker) SaveSnapshot(a Aggregate) error {
 	return s.save(a)
 }
 

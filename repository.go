@@ -10,6 +10,16 @@ var (
 	ErrAggregateNotFound     = errors.New("aggregate not found")
 )
 
+type Repository interface {
+	// Get fetches the aggregates event and builds up the aggregate
+	// If there are snapshots for the aggregate, it will attempt to apply them,
+	// as well as all events after the version of the aggregate, if any.
+	Get(id string, aggregate Aggregate) error
+
+	// Save an aggregate's events
+	Save(aggregate Aggregate) error
+}
+
 // EventStore interface exposes the methods an event store must uphold
 type EventStore interface {
 	Save(events []Event) error
@@ -24,20 +34,26 @@ type Aggregate interface {
 }
 
 type SnapShooter interface {
-	Get(aggregateID string, a Aggregate) error
-	Save(a Aggregate) error
+	// ApplySnapshot retrieves and applies snapshots onto the given Aggregate.
+	ApplySnapshot(aggregateID string, a Aggregate) error
+
+	// SaveSnapshot requests a snapshot from the Aggregate,
+	// which must implement the SnapshotTaker interface, and persists
+	// it to the underlying SnapshotStore.
+	SaveSnapshot(a Aggregate) error
 }
 
-func NewRepository(es EventStore, s SnapShooter) *Repository {
-	return &Repository{
+// NewRepository creates and returns a new instance of Repo
+func NewRepository(es EventStore, s SnapShooter) *Repo {
+	return &Repo{
 		eventStore:  es,
 		snapper:     s,
 		EventStream: NewEventStream(),
 	}
 }
 
-// Repository is the returned instance from the factory function
-type Repository struct {
+// Repo is the returned instance from the factory function
+type Repo struct {
 	*EventStream
 	eventStore EventStore
 	snapper    SnapShooter
@@ -46,10 +62,10 @@ type Repository struct {
 // Get fetches the aggregates event and builds up the aggregate
 // If there is a snapshot store, try to fetch a snapshot of the aggregate and
 // event after the version of the aggregate, if any.
-func (r *Repository) Get(id string, aggregate Aggregate) error {
+func (r *Repo) Get(id string, aggregate Aggregate) error {
 	// if there is a snapshot store try fetch aggregate snapshot
 	if r.snapper != nil {
-		err := r.snapper.Get(id, aggregate)
+		err := r.snapper.ApplySnapshot(id, aggregate)
 		if err != nil && !errors.Is(err, ErrSnapshotNotFound) {
 			return err
 		}
@@ -74,7 +90,7 @@ func (r *Repository) Get(id string, aggregate Aggregate) error {
 }
 
 // Save an aggregates events
-func (r *Repository) Save(aggregate Aggregate) error {
+func (r *Repo) Save(aggregate Aggregate) error {
 	root := aggregate.Root()
 	if err := r.eventStore.Save(root.events); err != nil {
 		return err
@@ -89,10 +105,10 @@ func (r *Repository) Save(aggregate Aggregate) error {
 }
 
 // SaveSnapshot saves the current state of the aggregate but only if it has no unsaved events
-func (r *Repository) SaveSnapshot(aggregate Aggregate) error {
+func (r *Repo) SaveSnapshot(aggregate Aggregate) error {
 	if r.snapper == nil {
 		return ErrNoSnapShotInitialized
 	}
 
-	return r.snapper.Save(aggregate)
+	return r.snapper.SaveSnapshot(aggregate)
 }

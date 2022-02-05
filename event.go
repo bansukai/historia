@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	// ErrNoEvents when there is no events to get
+	// ErrNoEvents when there are no events to apply
 	ErrNoEvents = errors.New("no events")
 )
 

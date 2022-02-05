@@ -17,22 +17,22 @@ func Test_NewSnapper_should_return_valid_instance(t *testing.T) {
 	assert.Equal(t, m, s.marshaller)
 }
 
-func Test_Snapper_Get_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
+func Test_Snapper_ApplySnapshot_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
 	s := NewSnapper(nil, nil)
-	assert.ErrorIs(t, s.Get("d", &ssAggNoSnapshot{}), ErrAggregateDoesntSupportSnapshots)
+	assert.ErrorIs(t, s.ApplySnapshot("d", &ssAggNoSnapshot{}), ErrAggregateDoesntSupportSnapshots)
 }
 
-func Test_Snapper_Get_should_return_snapStore_Get_error(t *testing.T) {
+func Test_Snapper_ApplySnapshot_should_return_snapStore_Get_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
 		get: func(aggregateID, t string) (*Snapshot, error) { return nil, err },
 	}
 	s := NewSnapper(sm, nil)
 
-	assert.ErrorIs(t, s.Get("some", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.ApplySnapshot("some", &ssAggWithSnapshot{}), err)
 }
 
-func Test_Snapper_Get_should_return_unmarshal_error(t *testing.T) {
+func Test_Snapper_ApplySnapshot_should_return_unmarshal_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
 		get: func(aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
@@ -43,10 +43,10 @@ func Test_Snapper_Get_should_return_unmarshal_error(t *testing.T) {
 
 	s := NewSnapper(sm, m)
 
-	assert.ErrorIs(t, s.Get("gone", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.ApplySnapshot("gone", &ssAggWithSnapshot{}), err)
 }
 
-func Test_Snapper_Get_should_return_SnapshotTaker_ApplySnapshot_error(t *testing.T) {
+func Test_Snapper_ApplySnapshot_should_return_SnapshotTaker_ApplySnapshot_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
 		get: func(aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
@@ -60,10 +60,10 @@ func Test_Snapper_Get_should_return_SnapshotTaker_ApplySnapshot_error(t *testing
 		applySnapshot: func(state SnapshotBody) error { return err },
 	}
 
-	assert.ErrorIs(t, s.Get("yay", agg), err)
+	assert.ErrorIs(t, s.ApplySnapshot("yay", agg), err)
 }
 
-func Test_Snapper_Get_should_call_setInternals(t *testing.T) {
+func Test_Snapper_ApplySnapshot_should_call_setInternals(t *testing.T) {
 	snap := Snapshot{
 		ID:      "some_id",
 		Type:    "",
@@ -84,18 +84,18 @@ func Test_Snapper_Get_should_call_setInternals(t *testing.T) {
 	}
 
 	s := NewSnapper(sm, m)
-	assert.NoError(t, s.Get(snap.ID, agg))
+	assert.NoError(t, s.ApplySnapshot(snap.ID, agg))
 
 	assert.Equal(t, snap.ID, agg.ID())
 	assert.Equal(t, snap.Version, agg.Version())
 }
 
-func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_have_id(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_doesnt_have_id(t *testing.T) {
 	s := NewSnapper(nil, nil)
-	assert.ErrorIs(t, s.Save(&ssAggWithSnapshot{}), ErrAggregateMissingID)
+	assert.ErrorIs(t, s.SaveSnapshot(&ssAggWithSnapshot{}), ErrAggregateMissingID)
 }
 
-func Test_Snapper_Save_should_return_error_when_aggregate_has_unsaved_events(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_has_unsaved_events(t *testing.T) {
 	s := NewSnapper(nil, nil)
 	agg := &ssAggWithSnapshot{
 		AggregateBase: AggregateBase{
@@ -103,10 +103,10 @@ func Test_Snapper_Save_should_return_error_when_aggregate_has_unsaved_events(t *
 			events: []Event{{}},
 		},
 	}
-	assert.ErrorIs(t, s.Save(agg), ErrUnsavedEvents)
+	assert.ErrorIs(t, s.SaveSnapshot(agg), ErrUnsavedEvents)
 }
 
-func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
 	err := errors.New("wonder")
 	m := &marshalMocker{
 		marshal: func(v interface{}) ([]byte, error) { return nil, err },
@@ -119,10 +119,10 @@ func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_implement_Snaps
 		},
 	}
 
-	assert.ErrorIs(t, s.Save(agg), ErrAggregateDoesntSupportSnapshots)
+	assert.ErrorIs(t, s.SaveSnapshot(agg), ErrAggregateDoesntSupportSnapshots)
 }
 
-func Test_Snapper_Save_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
 	agg := &ssAggWithSnapshot{
 		AggregateBase: AggregateBase{
 			id:      "yes",
@@ -132,10 +132,10 @@ func Test_Snapper_Save_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
 	}
 
 	s := NewSnapper(nil, nil)
-	assert.NoError(t, s.Save(agg))
+	assert.NoError(t, s.SaveSnapshot(agg))
 }
 
-func Test_Snapper_Save_should_return_error_when_marshal_returns_error(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_return_error_when_marshal_returns_error(t *testing.T) {
 	agg := &ssAggWithSnapshot{
 		AggregateBase: AggregateBase{
 			id:      "yes",
@@ -150,10 +150,10 @@ func Test_Snapper_Save_should_return_error_when_marshal_returns_error(t *testing
 	}
 
 	s := NewSnapper(nil, m)
-	assert.ErrorIs(t, s.Save(agg), err)
+	assert.ErrorIs(t, s.SaveSnapshot(agg), err)
 }
 
-func Test_Snapper_Save_should_call_save_on_snapStore(t *testing.T) {
+func Test_Snapper_SaveSnapshot_should_call_save_on_snapStore(t *testing.T) {
 	now := time.Now()
 	SetNowFunc(func() time.Time { return now })
 	defer func() { SetNowFunc(time.Now) }()
@@ -186,7 +186,7 @@ func Test_Snapper_Save_should_call_save_on_snapStore(t *testing.T) {
 
 	s := NewSnapper(ss, m)
 
-	assert.ErrorIs(t, s.Save(agg), err)
+	assert.ErrorIs(t, s.SaveSnapshot(agg), err)
 }
 
 // region mocks

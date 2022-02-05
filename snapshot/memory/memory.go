@@ -3,7 +3,7 @@ package memory
 import (
 	"fmt"
 
-	"github.com/reiroldan/historia"
+	"github.com/bansukai/historia"
 )
 
 // New handler for the snapshot service

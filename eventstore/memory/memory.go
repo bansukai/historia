@@ -3,8 +3,8 @@ package memory
 import (
 	"sync"
 
-	"github.com/reiroldan/historia"
-	"github.com/reiroldan/historia/eventstore"
+	"github.com/bansukai/historia"
+	"github.com/bansukai/historia/eventstore"
 )
 
 // New in memory event store

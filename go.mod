@@ -1,4 +1,4 @@
-module github.com/reiroldan/historia
+module github.com/bansukai/historia
 
 go 1.17
 

@@ -3,7 +3,7 @@ package eventstore
 import (
 	"errors"
 
-	"github.com/reiroldan/historia"
+	"github.com/bansukai/historia"
 )
 
 var (

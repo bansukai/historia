@@ -94,7 +94,7 @@ func Test_AggregateRoot_update_should_set_version_to_last_event_and_clear_events
 
 func Test_AggregateRoot_path_should_return_path(t *testing.T) {
 	p := aggAgg{}
-	assert.Equal(t, "github.com/reiroldan/historia", p.path())
+	assert.Equal(t, "github.com/bansukai/historia", p.path())
 }
 
 // region mocks

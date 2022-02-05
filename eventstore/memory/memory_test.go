@@ -3,7 +3,7 @@ package memory
 import (
 	"testing"
 
-	"github.com/reiroldan/historia/eventstore"
+	"github.com/bansukai/historia/eventstore"
 )
 
 func TestMemoryStore(t *testing.T) {

@@ -3,7 +3,7 @@ package memory
 import (
 	"testing"
 
-	"github.com/reiroldan/historia/snapshot"
+	"github.com/bansukai/historia/snapshot"
 )
 
 func TestStore(t *testing.T) {

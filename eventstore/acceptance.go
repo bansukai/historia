@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	hi "github.com/bansukai/historia"
 	"github.com/google/uuid"
-	hi "github.com/reiroldan/historia"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@ package snapshot
 import (
 	"testing"
 
-	"github.com/reiroldan/historia"
+	"github.com/bansukai/historia"
 	"github.com/stretchr/testify/assert"
 )
 

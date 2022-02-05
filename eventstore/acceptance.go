@@ -108,7 +108,7 @@ var aggregateType = ""
 var timestamp = time.Now()
 
 type acceptanceAggregate struct {
-	hi.AggregateRoot
+	hi.AggregateBase
 }
 
 func (a *acceptanceAggregate) Transition(evt hi.Event) {}

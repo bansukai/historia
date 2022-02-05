@@ -20,7 +20,7 @@ type EventStore interface {
 
 // Aggregate interface to use the aggregate root specific methods
 type Aggregate interface {
-	Root() *AggregateRoot
+	Root() *AggregateBase
 	Transition(evt Event)
 }
 

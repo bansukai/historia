@@ -29,7 +29,7 @@ func Test_Snapper_Get_should_return_snapStore_Get_error(t *testing.T) {
 	}
 	s := NewSnapper(sm, nil)
 
-	assert.ErrorIs(t, s.Get("poop", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.Get("some", &ssAggWithSnapshot{}), err)
 }
 
 func Test_Snapper_Get_should_return_unmarshal_error(t *testing.T) {
@@ -43,7 +43,7 @@ func Test_Snapper_Get_should_return_unmarshal_error(t *testing.T) {
 
 	s := NewSnapper(sm, m)
 
-	assert.ErrorIs(t, s.Get("poop", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.Get("gone", &ssAggWithSnapshot{}), err)
 }
 
 func Test_Snapper_Get_should_return_SnapshotTaker_ApplySnapshot_error(t *testing.T) {
@@ -60,7 +60,7 @@ func Test_Snapper_Get_should_return_SnapshotTaker_ApplySnapshot_error(t *testing
 		applySnapshot: func(state SnapshotBody) error { return err },
 	}
 
-	assert.ErrorIs(t, s.Get("poop", agg), err)
+	assert.ErrorIs(t, s.Get("yay", agg), err)
 }
 
 func Test_Snapper_Get_should_call_setInternals(t *testing.T) {
@@ -98,7 +98,7 @@ func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_have_id(t *test
 func Test_Snapper_Save_should_return_error_when_aggregate_has_unsaved_events(t *testing.T) {
 	s := NewSnapper(nil, nil)
 	agg := &ssAggWithSnapshot{
-		AggregateRoot: AggregateRoot{
+		AggregateBase: AggregateBase{
 			id:     "yes",
 			events: []Event{{}},
 		},
@@ -107,14 +107,14 @@ func Test_Snapper_Save_should_return_error_when_aggregate_has_unsaved_events(t *
 }
 
 func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
-	err := errors.New("poop")
+	err := errors.New("wonder")
 	m := &marshalMocker{
 		marshal: func(v interface{}) ([]byte, error) { return nil, err },
 	}
 
 	s := NewSnapper(nil, m)
 	agg := &ssAggNoSnapshot{
-		AggregateRoot: AggregateRoot{
+		AggregateBase: AggregateBase{
 			id: "yes",
 		},
 	}
@@ -124,7 +124,7 @@ func Test_Snapper_Save_should_return_error_when_aggregate_doesnt_implement_Snaps
 
 func Test_Snapper_Save_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
 	agg := &ssAggWithSnapshot{
-		AggregateRoot: AggregateRoot{
+		AggregateBase: AggregateBase{
 			id:      "yes",
 			version: Version(12),
 		},
@@ -137,7 +137,7 @@ func Test_Snapper_Save_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
 
 func Test_Snapper_Save_should_return_error_when_marshal_returns_error(t *testing.T) {
 	agg := &ssAggWithSnapshot{
-		AggregateRoot: AggregateRoot{
+		AggregateBase: AggregateBase{
 			id:      "yes",
 			version: Version(12),
 		},
@@ -158,9 +158,9 @@ func Test_Snapper_Save_should_call_save_on_snapStore(t *testing.T) {
 	SetNowFunc(func() time.Time { return now })
 	defer func() { SetNowFunc(time.Now) }()
 
-	err := errors.New("poop")
+	err := errors.New("nani")
 	agg := &ssAggWithSnapshot{
-		AggregateRoot: AggregateRoot{
+		AggregateBase: AggregateBase{
 			id:      "yes",
 			version: Version(12),
 		},
@@ -192,13 +192,13 @@ func Test_Snapper_Save_should_call_save_on_snapStore(t *testing.T) {
 // region mocks
 
 type ssAggNoSnapshot struct {
-	AggregateRoot
+	AggregateBase
 }
 
 func (s *ssAggNoSnapshot) Transition(Event) {}
 
 type ssAggWithSnapshot struct {
-	AggregateRoot
+	AggregateBase
 	takeSnapshot  func() SnapshotBody
 	applySnapshot func(state SnapshotBody) error
 }

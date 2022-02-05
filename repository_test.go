@@ -17,7 +17,7 @@ func Test_NewRepository_should_return_valid_instance(t *testing.T) {
 }
 
 func Test_Repository_Save_should_return_eventStore_error(t *testing.T) {
-	e := errors.New("it pooped")
+	e := errors.New("it went boom")
 	esMock := &eventStoreMocker{
 		save: func(events []Event) error { return e },
 	}
@@ -128,7 +128,7 @@ func Test_Repository_SaveSnapshot_should_call_snapshot_save(t *testing.T) {
 // region Mocks
 
 type repoAggregate struct {
-	AggregateRoot
+	AggregateBase
 	name string
 }
 

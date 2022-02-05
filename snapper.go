@@ -111,7 +111,7 @@ func (s *Snapper) Save(a Aggregate) error {
 }
 
 // validate make sure the aggregate is valid to be saved
-func validate(root AggregateRoot) error {
+func validate(root AggregateBase) error {
 	if root.ID() == "" {
 		return ErrAggregateMissingID
 	}

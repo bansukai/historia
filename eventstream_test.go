@@ -21,7 +21,7 @@ func Test_EventStream_formatAggregatePathName(t *testing.T) {
 }
 
 func Test_EventStream_formatAggregatePathNameID(t *testing.T) {
-	p := formatAggregatePathNameID(&esAgg{AggregateRoot{id: "yay"}})
+	p := formatAggregatePathNameID(&esAgg{AggregateBase{id: "yay"}})
 	assert.Equal(t, "github.com/bansukai/historia/esAgg/yay", p)
 }
 
@@ -85,8 +85,8 @@ func Test_EventStream_SubscribeSpecificAggregateType(t *testing.T) {
 }
 
 func Test_EventStream_SubscriberSpecificAggregate(t *testing.T) {
-	first := esAgg{AggregateRoot: AggregateRoot{id: "123"}}
-	second := esAggOther{AggregateRoot: AggregateRoot{id: "abc"}}
+	first := esAgg{AggregateBase: AggregateBase{id: "123"}}
+	second := esAggOther{AggregateBase: AggregateBase{id: "abc"}}
 
 	var streamEvent *Event
 	es := NewEventStream()
@@ -144,11 +144,11 @@ func Test_EventStream_Multiple(t *testing.T) {
 
 type esEvent struct{ Name string }
 
-type esAgg struct{ AggregateRoot }
+type esAgg struct{ AggregateBase }
 
 func (e *esAgg) Transition(_ Event) {}
 
-type esAggOther struct{ AggregateRoot }
+type esAggOther struct{ AggregateBase }
 
 func (e *esAggOther) Transition(_ Event) {}
 

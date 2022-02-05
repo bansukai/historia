@@ -3,14 +3,14 @@ package eventstore
 import (
 	"errors"
 
-	"github.com/bansukai/historia"
+	hi "github.com/bansukai/historia"
 )
 
 var (
 	// ErrEventMultipleAggregates when events holds different id
 	ErrEventMultipleAggregates = errors.New("events holds events for more than one aggregate")
 
-	// ErrEventMultipleAggregateTypes when events holds different aggregate types
+	// ErrEventMultipleAggregateTypes when events hold different aggregate types
 	ErrEventMultipleAggregateTypes = errors.New("events holds events for more than one aggregate type")
 
 	// ErrConcurrency when the currently saved version of the aggregate differs from the new ones
@@ -21,15 +21,15 @@ var (
 )
 
 // ValidateEvents make sure the incoming events are valid
-func ValidateEvents(aggregateID string, currentVersion historia.Version, events []historia.Event) error {
-	aggregateType := events[0].AggregateType
+func ValidateEvents(aggregateID string, currentVersion hi.Version, events []hi.Event) error {
+	at := events[0].AggregateType
 
 	for _, event := range events {
 		if event.AggregateID != aggregateID {
 			return ErrEventMultipleAggregates
 		}
 
-		if event.AggregateType != aggregateType {
+		if event.AggregateType != at {
 			return ErrEventMultipleAggregateTypes
 		}
 

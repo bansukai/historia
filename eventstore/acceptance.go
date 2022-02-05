@@ -1,6 +1,7 @@
 package eventstore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -32,11 +33,11 @@ func saveAndGetEvents(es hi.EventStore) error {
 	aggregateID := idFunc()
 	events := createEvents(aggregateID)
 
-	if err := es.Save(events); err != nil {
+	if err := es.SaveEvents(context.Background(), events); err != nil {
 		return err
 	}
 
-	fetchedEvents, err := es.Get(aggregateID, aggregateType, 0)
+	fetchedEvents, err := es.GetEvents(context.Background(), aggregateID, aggregateType, 0)
 	if err != nil {
 		return err
 	}
@@ -53,12 +54,12 @@ func saveAndGetEvents(es hi.EventStore) error {
 	events = append(events, createEventsContinue(aggregateID)...)
 
 	// Add more events to the same aggregate event stream
-	err = es.Save(createEventsContinue(aggregateID))
+	err = es.SaveEvents(context.Background(), createEventsContinue(aggregateID))
 	if err != nil {
 		return err
 	}
 
-	fetchedEvents, err = es.Get(aggregateID, aggregateType, 0)
+	fetchedEvents, err = es.GetEvents(context.Background(), aggregateID, aggregateType, 0)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bansukai/historia"
@@ -18,8 +19,8 @@ type Memory struct {
 	store map[string]*historia.Snapshot
 }
 
-func (h *Memory) Get(id, t string) (*historia.Snapshot, error) {
-	k := formatSnapshotKey(id, t)
+func (h *Memory) Get(_ context.Context, aggregateID string, aggregateType string) (*historia.Snapshot, error) {
+	k := formatSnapshotKey(aggregateID, aggregateType)
 	v, ok := h.store[k]
 	if !ok {
 		return nil, historia.ErrSnapshotNotFound
@@ -27,9 +28,9 @@ func (h *Memory) Get(id, t string) (*historia.Snapshot, error) {
 	return v, nil
 }
 
-func (h *Memory) Save(s *historia.Snapshot) error {
-	k := formatSnapshotKey(s.ID, s.Type)
-	h.store[k] = s
+func (h *Memory) Save(_ context.Context, ss *historia.Snapshot) error {
+	k := formatSnapshotKey(ss.ID, ss.Type)
+	h.store[k] = ss
 	return nil
 }
 

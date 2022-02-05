@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"sync"
 
 	"github.com/bansukai/historia"
@@ -22,8 +23,8 @@ type Memory struct {
 	lock            sync.Mutex
 }
 
-// Save an aggregate (its events)
-func (e *Memory) Save(events []historia.Event) error {
+// SaveEvents an aggregate (its events)
+func (e *Memory) SaveEvents(ctx context.Context, events []historia.Event) error {
 	// Return if there is no events to save
 	if len(events) == 0 {
 		return nil
@@ -55,8 +56,8 @@ func (e *Memory) Save(events []historia.Event) error {
 	return nil
 }
 
-// Get aggregate events
-func (e *Memory) Get(id string, aggregateType string, afterVersion historia.Version) ([]historia.Event, error) {
+// GetEvents aggregate events
+func (e *Memory) GetEvents(ctx context.Context, id string, aggregateType string, afterVersion historia.Version) ([]historia.Event, error) {
 	var events []historia.Event
 
 	e.lock.Lock()

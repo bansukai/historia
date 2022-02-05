@@ -1,6 +1,7 @@
 package historia
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -19,23 +20,23 @@ func Test_NewSnapper_should_return_valid_instance(t *testing.T) {
 
 func Test_Snapper_ApplySnapshot_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
 	s := NewSnapper(nil, nil)
-	assert.ErrorIs(t, s.ApplySnapshot("d", &ssAggNoSnapshot{}), ErrAggregateDoesntSupportSnapshots)
+	assert.ErrorIs(t, s.ApplySnapshot(context.Background(), "d", &ssAggNoSnapshot{}), ErrAggregateDoesntSupportSnapshots)
 }
 
 func Test_Snapper_ApplySnapshot_should_return_snapStore_Get_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
-		get: func(aggregateID, t string) (*Snapshot, error) { return nil, err },
+		get: func(ctx context.Context, aggregateID, t string) (*Snapshot, error) { return nil, err },
 	}
 	s := NewSnapper(sm, nil)
 
-	assert.ErrorIs(t, s.ApplySnapshot("some", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.ApplySnapshot(context.Background(), "some", &ssAggWithSnapshot{}), err)
 }
 
 func Test_Snapper_ApplySnapshot_should_return_unmarshal_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
-		get: func(aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
+		get: func(ctx context.Context, aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
 	}
 	m := &marshalMocker{
 		unmarshal: func(data []byte, v interface{}) error { return err },
@@ -43,13 +44,13 @@ func Test_Snapper_ApplySnapshot_should_return_unmarshal_error(t *testing.T) {
 
 	s := NewSnapper(sm, m)
 
-	assert.ErrorIs(t, s.ApplySnapshot("gone", &ssAggWithSnapshot{}), err)
+	assert.ErrorIs(t, s.ApplySnapshot(context.Background(), "gone", &ssAggWithSnapshot{}), err)
 }
 
 func Test_Snapper_ApplySnapshot_should_return_SnapshotTaker_ApplySnapshot_error(t *testing.T) {
 	err := errors.New("nope")
 	sm := &snapStoreMocker{
-		get: func(aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
+		get: func(ctx context.Context, aggregateID, t string) (*Snapshot, error) { return &Snapshot{}, nil },
 	}
 	m := &marshalMocker{
 		unmarshal: func(data []byte, v interface{}) error { return nil },
@@ -60,7 +61,7 @@ func Test_Snapper_ApplySnapshot_should_return_SnapshotTaker_ApplySnapshot_error(
 		applySnapshot: func(state SnapshotBody) error { return err },
 	}
 
-	assert.ErrorIs(t, s.ApplySnapshot("yay", agg), err)
+	assert.ErrorIs(t, s.ApplySnapshot(context.Background(), "yay", agg), err)
 }
 
 func Test_Snapper_ApplySnapshot_should_call_setInternals(t *testing.T) {
@@ -72,7 +73,7 @@ func Test_Snapper_ApplySnapshot_should_call_setInternals(t *testing.T) {
 	}
 
 	sm := &snapStoreMocker{
-		get: func(aggregateID, t string) (*Snapshot, error) { return &snap, nil },
+		get: func(ctx context.Context, aggregateID, t string) (*Snapshot, error) { return &snap, nil },
 	}
 
 	m := &marshalMocker{
@@ -84,7 +85,7 @@ func Test_Snapper_ApplySnapshot_should_call_setInternals(t *testing.T) {
 	}
 
 	s := NewSnapper(sm, m)
-	assert.NoError(t, s.ApplySnapshot(snap.ID, agg))
+	assert.NoError(t, s.ApplySnapshot(context.Background(), snap.ID, agg))
 
 	assert.Equal(t, snap.ID, agg.ID())
 	assert.Equal(t, snap.Version, agg.Version())
@@ -92,7 +93,7 @@ func Test_Snapper_ApplySnapshot_should_call_setInternals(t *testing.T) {
 
 func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_doesnt_have_id(t *testing.T) {
 	s := NewSnapper(nil, nil)
-	assert.ErrorIs(t, s.SaveSnapshot(&ssAggWithSnapshot{}), ErrAggregateMissingID)
+	assert.ErrorIs(t, s.SaveSnapshot(context.Background(), &ssAggWithSnapshot{}), ErrAggregateMissingID)
 }
 
 func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_has_unsaved_events(t *testing.T) {
@@ -103,7 +104,7 @@ func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_has_unsaved_ev
 			events: []Event{{}},
 		},
 	}
-	assert.ErrorIs(t, s.SaveSnapshot(agg), ErrUnsavedEvents)
+	assert.ErrorIs(t, s.SaveSnapshot(context.Background(), agg), ErrUnsavedEvents)
 }
 
 func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_doesnt_implement_SnapshotTaker(t *testing.T) {
@@ -119,7 +120,7 @@ func Test_Snapper_SaveSnapshot_should_return_error_when_aggregate_doesnt_impleme
 		},
 	}
 
-	assert.ErrorIs(t, s.SaveSnapshot(agg), ErrAggregateDoesntSupportSnapshots)
+	assert.ErrorIs(t, s.SaveSnapshot(context.Background(), agg), ErrAggregateDoesntSupportSnapshots)
 }
 
 func Test_Snapper_SaveSnapshot_should_return_if_TakeSnapshot_returns_nil(t *testing.T) {
@@ -132,7 +133,7 @@ func Test_Snapper_SaveSnapshot_should_return_if_TakeSnapshot_returns_nil(t *test
 	}
 
 	s := NewSnapper(nil, nil)
-	assert.NoError(t, s.SaveSnapshot(agg))
+	assert.NoError(t, s.SaveSnapshot(context.Background(), agg))
 }
 
 func Test_Snapper_SaveSnapshot_should_return_error_when_marshal_returns_error(t *testing.T) {
@@ -150,7 +151,7 @@ func Test_Snapper_SaveSnapshot_should_return_error_when_marshal_returns_error(t 
 	}
 
 	s := NewSnapper(nil, m)
-	assert.ErrorIs(t, s.SaveSnapshot(agg), err)
+	assert.ErrorIs(t, s.SaveSnapshot(context.Background(), agg), err)
 }
 
 func Test_Snapper_SaveSnapshot_should_call_save_on_snapStore(t *testing.T) {
@@ -174,7 +175,7 @@ func Test_Snapper_SaveSnapshot_should_call_save_on_snapStore(t *testing.T) {
 	}
 
 	ss := &snapStoreMocker{
-		save: func(ss *Snapshot) error {
+		save: func(ctx context.Context, ss *Snapshot) error {
 			assert.Equal(t, agg.ID(), ss.ID)
 			assert.Equal(t, now, ss.Timestamp)
 			assert.Equal(t, "ssAggWithSnapshot", ss.Type)
@@ -186,7 +187,7 @@ func Test_Snapper_SaveSnapshot_should_call_save_on_snapStore(t *testing.T) {
 
 	s := NewSnapper(ss, m)
 
-	assert.ErrorIs(t, s.SaveSnapshot(agg), err)
+	assert.ErrorIs(t, s.SaveSnapshot(context.Background(), agg), err)
 }
 
 // region mocks
@@ -208,12 +209,14 @@ func (s *ssAggWithSnapshot) ApplySnapshot(state SnapshotBody) error { return s.a
 func (s *ssAggWithSnapshot) Transition(Event)                       {}
 
 type snapStoreMocker struct {
-	get  func(aggregateID, t string) (*Snapshot, error)
-	save func(ss *Snapshot) error
+	get  func(ctx context.Context, aggregateID, t string) (*Snapshot, error)
+	save func(ctx context.Context, ss *Snapshot) error
 }
 
-func (s *snapStoreMocker) Get(aggregateID, t string) (*Snapshot, error) { return s.get(aggregateID, t) }
-func (s *snapStoreMocker) Save(ss *Snapshot) error                      { return s.save(ss) }
+func (s *snapStoreMocker) Get(ctx context.Context, aggregateID string, aggregateType string) (*Snapshot, error) {
+	return s.get(ctx, aggregateID, aggregateType)
+}
+func (s *snapStoreMocker) Save(ctx context.Context, ss *Snapshot) error { return s.save(ctx, ss) }
 
 type marshalMocker struct {
 	marshal   func(v interface{}) ([]byte, error)

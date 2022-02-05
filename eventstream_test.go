@@ -1,6 +1,7 @@
 package historia
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -28,12 +29,16 @@ func Test_EventStream_formatAggregatePathNameID(t *testing.T) {
 func Test_EventStream_SubscribeAll(t *testing.T) {
 	var streamEvent *Event
 	es := NewEventStream()
-	s := es.SubscriberAll(func(e Event) { streamEvent = &e })
+	s := es.SubscriberAll(func(ctx context.Context, e Event) error {
+		streamEvent = &e
+		return nil
+	})
+
 	s.Subscribe()
 	assert.Len(t, es.allEvents, 1)
 
 	var event = Event{Version: 123, Data: &esEvent{Name: "123"}, AggregateType: "esAgg"}
-	es.Update(&esAgg{}, []Event{event})
+	assert.NoError(t, es.Update(context.Background(), &esAgg{}, []Event{event}))
 
 	assert.NotNil(t, streamEvent)
 	assert.Equal(t, event.Version, streamEvent.Version)
@@ -45,12 +50,15 @@ func Test_EventStream_SubscribeAll(t *testing.T) {
 func Test_EventStream_SubscribeSpecificEvent(t *testing.T) {
 	var streamEvent *Event
 	es := NewEventStream()
-	s := es.SubscriberSpecificEvent(func(e Event) { streamEvent = &e }, &esEvent{})
+	s := es.SubscriberSpecificEvent(func(ctx context.Context, e Event) error {
+		streamEvent = &e
+		return nil
+	}, &esEvent{})
 	s.Subscribe()
 	assert.Len(t, es.specificEvents[reflect.TypeOf(&esEvent{})], 1)
 
 	var event = Event{Version: 123, Data: &esEvent{Name: "123"}, AggregateType: "esAgg"}
-	es.Update(&esAgg{}, []Event{event})
+	assert.NoError(t, es.Update(context.Background(), &esAgg{}, []Event{event}))
 
 	assert.NotNil(t, streamEvent)
 	assert.Equal(t, event.Version, streamEvent.Version)
@@ -62,7 +70,11 @@ func Test_EventStream_SubscribeSpecificEvent(t *testing.T) {
 func Test_EventStream_SubscribeSpecificAggregateType(t *testing.T) {
 	var streamEvent *Event
 	es := NewEventStream()
-	s := es.SubscriberAggregateType(func(e Event) { streamEvent = &e }, &esAgg{}, &esAggOther{})
+	s := es.SubscriberAggregateType(func(ctx context.Context, e Event) error {
+		streamEvent = &e
+		return nil
+	}, &esAgg{}, &esAggOther{})
+
 	s.Subscribe()
 	assert.Len(t, es.aggregateTypes, 2)
 	assert.Len(t, es.aggregateTypes[formatAggregatePathType(&esAgg{})], 1)
@@ -70,13 +82,13 @@ func Test_EventStream_SubscribeSpecificAggregateType(t *testing.T) {
 
 	// update with event from the AnAggregate aggregate
 	var event1 = Event{Version: 123, Data: &esEvent{Name: "123"}, AggregateType: "esAgg"}
-	es.Update(&esAgg{}, []Event{event1})
+	assert.NoError(t, es.Update(context.Background(), &esAgg{}, []Event{event1}))
 	assert.NotNil(t, streamEvent)
 	assert.Equal(t, event1.Version, streamEvent.Version)
 
 	// update with event from the AnotherAggregate aggregate
 	var event2 = Event{Version: 123, Data: &esEvent{Name: "Moo"}, AggregateType: "esAggOther"}
-	es.Update(&esAggOther{}, []Event{event2})
+	assert.NoError(t, es.Update(context.Background(), &esAggOther{}, []Event{event2}))
 	assert.Equal(t, event2.Version, streamEvent.Version)
 
 	s.Unsubscribe()
@@ -90,7 +102,10 @@ func Test_EventStream_SubscriberSpecificAggregate(t *testing.T) {
 
 	var streamEvent *Event
 	es := NewEventStream()
-	s := es.SubscriberSpecificAggregate(func(e Event) { streamEvent = &e }, &first, &second)
+	s := es.SubscriberSpecificAggregate(func(ctx context.Context, e Event) error {
+		streamEvent = &e
+		return nil
+	}, &first, &second)
 	s.Subscribe()
 	assert.Len(t, es.specificAggregates, 2)
 	assert.Len(t, es.specificAggregates[formatAggregatePathNameID(&first)], 1)
@@ -98,13 +113,13 @@ func Test_EventStream_SubscriberSpecificAggregate(t *testing.T) {
 
 	// update with event1 from the esAgg aggregate
 	var event1 = Event{Version: 123, Data: &esEvent{Name: "Poo"}, AggregateType: "esAgg"}
-	es.Update(&first, []Event{event1})
+	assert.NoError(t, es.Update(context.Background(), &first, []Event{event1}))
 	assert.NotNil(t, streamEvent)
 	assert.Equal(t, event1.Version, streamEvent.Version)
 
 	// update with event2 from the esAggOther aggregate
 	var event2 = Event{Version: 123, Data: &esEvent{Name: "Moo"}, AggregateType: "esAggOther"}
-	es.Update(&second, []Event{event2})
+	assert.NoError(t, es.Update(context.Background(), &second, []Event{event2}))
 	assert.Equal(t, event2.Version, streamEvent.Version)
 
 	s.Unsubscribe()
@@ -124,14 +139,33 @@ func Test_EventStream_Multiple(t *testing.T) {
 	type anEvent struct{ Name string }
 	type anotherEvent struct{}
 
-	es.SubscriberSpecificEvent(func(e Event) { streamEvent1 = append(streamEvent1, e) }, &anotherEvent{}).Subscribe()
-	es.SubscriberSpecificEvent(func(e Event) { streamEvent2 = append(streamEvent2, e) }, &anotherEvent{}, &anEvent{}).Subscribe()
-	es.SubscriberSpecificEvent(func(e Event) { streamEvent3 = append(streamEvent3, e) }, &anEvent{}).Subscribe()
-	es.SubscriberAll(func(e Event) { streamEvent4 = append(streamEvent4, e) }).Subscribe()
-	es.SubscriberAggregateType(func(e Event) { streamEvent5 = append(streamEvent5, e) }, &esAgg{}).Subscribe()
+	es.SubscriberSpecificEvent(func(ctx context.Context, e Event) error {
+		streamEvent1 = append(streamEvent1, e)
+		return nil
+	}, &anotherEvent{}).Subscribe()
+
+	es.SubscriberSpecificEvent(func(ctx context.Context, e Event) error {
+		streamEvent2 = append(streamEvent2, e)
+		return nil
+	}, &anotherEvent{}, &anEvent{}).Subscribe()
+
+	es.SubscriberSpecificEvent(func(ctx context.Context, e Event) error {
+		streamEvent3 = append(streamEvent3, e)
+		return nil
+	}, &anEvent{}).Subscribe()
+
+	es.SubscriberAll(func(ctx context.Context, e Event) error {
+		streamEvent4 = append(streamEvent4, e)
+		return nil
+	}).Subscribe()
+
+	es.SubscriberAggregateType(func(ctx context.Context, e Event) error {
+		streamEvent5 = append(streamEvent5, e)
+		return nil
+	}, &esAgg{}).Subscribe()
 
 	var event = Event{Version: 123, Data: &anEvent{Name: "Poo"}, AggregateType: "esAgg"}
-	es.Update(&esAgg{}, []Event{event})
+	assert.NoError(t, es.Update(context.Background(), &esAgg{}, []Event{event}))
 
 	assert.Len(t, streamEvent1, 0, "stream1 should not have any events")
 	assert.Len(t, streamEvent2, 1, "stream2 should have one event")

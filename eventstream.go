@@ -1,6 +1,7 @@
 package historia
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -18,7 +19,7 @@ func NewEventStream() *EventStream {
 
 // Subscription holding the subscribe / unsubscribe / and func to be called when event matches the subscription
 type Subscription struct {
-	f func(e Event)
+	f EventHandlerFunc
 	u func()
 	s func()
 }
@@ -44,27 +45,36 @@ type EventStream struct {
 }
 
 // Update invoke all event handling functions for subscriptions
-func (e *EventStream) Update(aggregate Aggregate, events []Event) {
+func (e *EventStream) Update(ctx context.Context, aggregate Aggregate, events []Event) error {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
 	for _, event := range events {
 		// call all functions that has registered for all events
-		updateAll(e, event)
+		if err := updateAll(ctx, e, event); err != nil {
+			return err
+		}
 
 		// call all functions that has registered for the specific event
-		updateSpecificEvent(e, event)
+		if err := updateSpecificEvent(ctx, e, event); err != nil {
+			return err
+		}
 
 		// call all functions that has registered for the aggregate type events
-		updateSpecificAggregateEvents(aggregate, e, event)
+		if err := updateSpecificAggregateEvents(ctx, aggregate, e, event); err != nil {
+			return err
+		}
 
 		// call all functions that has registered for the aggregate type and ID events
-		updateSpecificAggregate(aggregate, e, event)
+		if err := updateSpecificAggregate(ctx, aggregate, e, event); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // SubscriberAll bind a function to be called on all events
-func (e *EventStream) SubscriberAll(f func(e Event)) *Subscription {
+func (e *EventStream) SubscriberAll(f EventHandlerFunc) *Subscription {
 	s := Subscription{
 		f: f,
 	}
@@ -89,7 +99,7 @@ func (e *EventStream) SubscriberAll(f func(e Event)) *Subscription {
 }
 
 // SubscriberSpecificAggregate bind a function to be called on events that happen on an aggregate based on type and ID
-func (e *EventStream) SubscriberSpecificAggregate(f func(e Event), aggregates ...Aggregate) *Subscription {
+func (e *EventStream) SubscriberSpecificAggregate(f EventHandlerFunc, aggregates ...Aggregate) *Subscription {
 	s := Subscription{
 		f: f,
 	}
@@ -120,7 +130,7 @@ func (e *EventStream) SubscriberSpecificAggregate(f func(e Event), aggregates ..
 }
 
 // SubscriberAggregateType bind a function to be called on events for an aggregate type
-func (e *EventStream) SubscriberAggregateType(f func(e Event), aggregates ...Aggregate) *Subscription {
+func (e *EventStream) SubscriberAggregateType(f EventHandlerFunc, aggregates ...Aggregate) *Subscription {
 	s := Subscription{
 		f: f,
 	}
@@ -151,7 +161,7 @@ func (e *EventStream) SubscriberAggregateType(f func(e Event), aggregates ...Agg
 }
 
 // SubscriberSpecificEvent bind a function to be called on specific events
-func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...EventData) *Subscription {
+func (e *EventStream) SubscriberSpecificEvent(f EventHandlerFunc, events ...EventData) *Subscription {
 	s := Subscription{
 		f: f,
 	}
@@ -181,37 +191,49 @@ func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...EventDa
 	return &s
 }
 
-func updateAll(stream *EventStream, event Event) {
+func updateAll(ctx context.Context, stream *EventStream, event Event) error {
 	for _, s := range stream.allEvents {
-		s.f(event)
+		if err := s.f(ctx, event); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func updateSpecificEvent(stream *EventStream, event Event) {
+func updateSpecificEvent(ctx context.Context, stream *EventStream, event Event) error {
 	t := reflect.TypeOf(event.Data)
 	if subs, ok := stream.specificEvents[t]; ok {
 		for _, s := range subs {
-			s.f(event)
+			if err := s.f(ctx, event); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func updateSpecificAggregateEvents(aggregate Aggregate, stream *EventStream, event Event) {
+func updateSpecificAggregateEvents(ctx context.Context, aggregate Aggregate, stream *EventStream, event Event) error {
 	ref := formatAggregatePathType(aggregate)
 	if subs, ok := stream.aggregateTypes[ref]; ok {
 		for _, s := range subs {
-			s.f(event)
+			if err := s.f(ctx, event); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func updateSpecificAggregate(aggregate Aggregate, stream *EventStream, event Event) {
+func updateSpecificAggregate(ctx context.Context, aggregate Aggregate, stream *EventStream, event Event) error {
 	ref := formatAggregatePathNameID(aggregate)
 	if subs, ok := stream.specificAggregates[ref]; ok {
 		for _, s := range subs {
-			s.f(event)
+			if err := s.f(ctx, event); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func formatAggregatePathType(aggregate Aggregate) string {

@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"context"
 	"testing"
 
 	"github.com/bansukai/historia"
@@ -15,12 +16,12 @@ func AcceptanceTestSnapshotStore(t *testing.T, snapshot historia.SnapshotStore) 
 		State:   []byte{},
 	}
 
-	assert.NoError(t, snapshot.Save(&expected))
+	assert.NoError(t, snapshot.Save(context.Background(), &expected))
 
-	_, err := snapshot.Get("bogus", "bogus")
+	_, err := snapshot.Get(context.Background(), "bogus", "bogus")
 	assert.ErrorIs(t, err, historia.ErrSnapshotNotFound)
 
-	actual, err := snapshot.Get("123", "Person")
+	actual, err := snapshot.Get(context.Background(), "123", "Person")
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected.ID, actual.ID)

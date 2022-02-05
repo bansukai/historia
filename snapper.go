@@ -1,6 +1,7 @@
 package historia
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -20,8 +21,8 @@ type Snapshot struct {
 }
 
 type SnapshotStore interface {
-	Get(id string, t string) (*Snapshot, error)
-	Save(ss *Snapshot) error
+	Get(ctx context.Context, aggregateID string, aggregateType string) (*Snapshot, error)
+	Save(ctx context.Context, ss *Snapshot) error
 }
 
 type SnapshotBody interface{}
@@ -50,14 +51,14 @@ type Snapper struct {
 	marshaller Marshaller
 }
 
-func (s *Snapper) ApplySnapshot(aggregateID string, a Aggregate) error {
+func (s *Snapper) ApplySnapshot(ctx context.Context, aggregateID string, a Aggregate) error {
 	st, ok := a.(SnapshotTaker)
 	if !ok {
 		return ErrAggregateDoesntSupportSnapshots
 	}
 
 	t := TypeOf(a)
-	snap, err := s.store.Get(aggregateID, t)
+	snap, err := s.store.Get(ctx, aggregateID, t)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func (s *Snapper) ApplySnapshot(aggregateID string, a Aggregate) error {
 	return nil
 }
 
-func (s *Snapper) SaveSnapshot(a Aggregate) error {
+func (s *Snapper) SaveSnapshot(ctx context.Context, a Aggregate) error {
 	root := a.Root()
 	if err := validate(*root); err != nil {
 		return err
@@ -106,7 +107,7 @@ func (s *Snapper) SaveSnapshot(a Aggregate) error {
 		State:     buf,
 	}
 
-	return s.store.Save(&snap)
+	return s.store.Save(ctx, &snap)
 }
 
 // validate make sure the aggregate is valid to be saved

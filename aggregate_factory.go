@@ -14,7 +14,16 @@ var (
 // AggregateFactory returns aggregate instances of a specified type with the
 // AggregateID set to the provided value.
 type AggregateFactory interface {
-	Get(aggregate Aggregate, id string) (Aggregate, error)
+	// Get uses the registered delegate to create an instance of aggregateType
+	// and attempts to load its history.
+	Get(aggregateType Aggregate, aggregateID string) (Aggregate, error)
+
+	// RegisterDelegate is used to register a new function for instantiation of an Aggregate.
+	//
+	// Examples:
+	// 	func(id string) Aggregate { return NewMyAggregateType(id) }
+	// 	func(id string) Aggregate { return &MyAggregateType{AggregateBase:NewAggregateBase(id)} }
+	RegisterDelegate(delegate func(string) Aggregate) error
 }
 
 // AggregateRepository defines a contract for loading aggregates from the event history

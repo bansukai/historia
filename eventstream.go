@@ -151,7 +151,7 @@ func (e *EventStream) SubscriberAggregateType(f func(e Event), aggregates ...Agg
 }
 
 // SubscriberSpecificEvent bind a function to be called on specific events
-func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...interface{}) *Subscription {
+func (e *EventStream) SubscriberSpecificEvent(f func(e Event), events ...EventData) *Subscription {
 	s := Subscription{
 		f: f,
 	}

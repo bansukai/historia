@@ -18,6 +18,18 @@ type Repository interface {
 
 	// Save an aggregate's events
 	Save(aggregate Aggregate) error
+
+	// SubscriberAll bind a function to be called on all events
+	SubscriberAll(f func(e Event)) *Subscription
+
+	// SubscriberSpecificAggregate bind a function to be called on events that happen on an aggregate based on type and ID
+	SubscriberSpecificAggregate(f func(e Event), aggregates ...Aggregate) *Subscription
+
+	// SubscriberAggregateType bind a function to be called on events for an aggregate type
+	SubscriberAggregateType(f func(e Event), aggregates ...Aggregate) *Subscription
+
+	// SubscriberSpecificEvent bind a function to be called on specific events
+	SubscriberSpecificEvent(f func(e Event), events ...EventData) *Subscription
 }
 
 // EventStore interface exposes the methods an event store must uphold

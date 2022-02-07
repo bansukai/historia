@@ -17,7 +17,7 @@ type Repository interface {
 	// Get fetches the aggregates event and builds up the aggregate
 	// If there are snapshots for the aggregate, it will attempt to apply them,
 	// as well as all events after the version of the aggregate, if any.
-	Get(ctx context.Context, id string, aggregate Aggregate) error
+	Get(ctx context.Context, aggregateID string, aggregate Aggregate) error
 
 	// Save an aggregate's events
 	Save(ctx context.Context, aggregate Aggregate) error
@@ -42,7 +42,7 @@ type EventStore interface {
 	SaveEvents(ctx context.Context, events []Event) error
 
 	// GetEvents events belonging to an aggregate
-	GetEvents(ctx context.Context, id string, aggregateType string, afterVersion Version) ([]Event, error)
+	GetEvents(ctx context.Context, aggregateID string, aggregateType string, afterVersion Version) ([]Event, error)
 
 	// Close perform cleanup if required
 	Close() error
@@ -56,20 +56,20 @@ type Aggregate interface {
 
 type SnapShooter interface {
 	// ApplySnapshot retrieves and applies snapshots onto the given Aggregate.
-	ApplySnapshot(ctx context.Context, aggregateID string, a Aggregate) error
+	ApplySnapshot(ctx context.Context, aggregateID string, aggregate Aggregate) error
 
 	// SaveSnapshot requests a snapshot from the Aggregate,
 	// which must implement the SnapshotTaker interface, and persists
 	// it to the underlying SnapshotStore.
-	SaveSnapshot(ctx context.Context, a Aggregate) error
+	SaveSnapshot(ctx context.Context, aggregate Aggregate) error
 }
 
 // NewRepository creates and returns a new instance of Repo
 func NewRepository(es EventStore, s SnapShooter) *Repo {
 	return &Repo{
+		EventStream: NewEventStream(),
 		eventStore:  es,
 		snapper:     s,
-		EventStream: NewEventStream(),
 	}
 }
 
@@ -83,10 +83,10 @@ type Repo struct {
 // Get fetches the aggregates event and builds up the aggregate
 // If there is a snapshot store, try to fetch a snapshot of the aggregate and
 // event after the version of the aggregate, if any.
-func (r *Repo) Get(ctx context.Context, id string, aggregate Aggregate) error {
+func (r *Repo) Get(ctx context.Context, aggregateID string, aggregate Aggregate) error {
 	// if there is a snapshot store try fetch aggregate snapshot
 	if r.snapper != nil {
-		err := r.snapper.ApplySnapshot(ctx, id, aggregate)
+		err := r.snapper.ApplySnapshot(ctx, aggregateID, aggregate)
 		if err != nil && !errors.Is(err, ErrSnapshotNotFound) {
 			return err
 		}
@@ -95,7 +95,7 @@ func (r *Repo) Get(ctx context.Context, id string, aggregate Aggregate) error {
 	// fetch events after the current version of the aggregate that could be fetched from the snapshot store
 	root := aggregate.Root()
 	aggregateType := TypeOf(aggregate)
-	events, err := r.eventStore.GetEvents(ctx, id, aggregateType, root.Version())
+	events, err := r.eventStore.GetEvents(ctx, aggregateID, aggregateType, root.Version())
 	if err != nil {
 		if !errors.Is(err, ErrNoEvents) {
 			return err

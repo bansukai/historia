@@ -121,7 +121,7 @@ func Test_Repo_SaveSnapshot_should_return_error_if_no_snapper(t *testing.T) {
 func Test_Repo_SaveSnapshot_should_call_snapshot_save(t *testing.T) {
 	err := errors.New("failed")
 	sn := &snapMocker{
-		save: func(ctx context.Context, a Aggregate) error { return err },
+		save: func(ctx context.Context, aggregate Aggregate) error { return err },
 	}
 	r := NewRepository(nil, sn)
 	assert.ErrorIs(t, r.SaveSnapshot(context.Background(), &repoAggregate{}), err)
@@ -149,7 +149,7 @@ type repoEvent1 struct {
 
 type eventStoreMocker struct {
 	save  func(ctx context.Context, events []Event) error
-	get   func(ctx context.Context, id string, aggregateType string, afterVersion Version) ([]Event, error)
+	get   func(ctx context.Context, aggregateID string, aggregateType string, afterVersion Version) ([]Event, error)
 	close func() error
 }
 
@@ -157,8 +157,8 @@ func (e *eventStoreMocker) SaveEvents(ctx context.Context, events []Event) error
 	return e.save(ctx, events)
 }
 
-func (e *eventStoreMocker) GetEvents(ctx context.Context, id string, aggregateType string, afterVersion Version) ([]Event, error) {
-	return e.get(ctx, id, aggregateType, afterVersion)
+func (e *eventStoreMocker) GetEvents(ctx context.Context, aggregateID string, aggregateType string, afterVersion Version) ([]Event, error) {
+	return e.get(ctx, aggregateID, aggregateType, afterVersion)
 }
 
 func (e *eventStoreMocker) Close() error {
@@ -166,16 +166,16 @@ func (e *eventStoreMocker) Close() error {
 }
 
 type snapMocker struct {
-	apply func(ctx context.Context, id string, a Aggregate) error
-	save  func(ctx context.Context, a Aggregate) error
+	apply func(ctx context.Context, aggregateID string, aggregate Aggregate) error
+	save  func(ctx context.Context, aggregate Aggregate) error
 }
 
-func (s *snapMocker) ApplySnapshot(ctx context.Context, aggregateID string, a Aggregate) error {
-	return s.apply(ctx, aggregateID, a)
+func (s *snapMocker) ApplySnapshot(ctx context.Context, aggregateID string, aggregate Aggregate) error {
+	return s.apply(ctx, aggregateID, aggregate)
 }
 
-func (s *snapMocker) SaveSnapshot(ctx context.Context, a Aggregate) error {
-	return s.save(ctx, a)
+func (s *snapMocker) SaveSnapshot(ctx context.Context, aggregate Aggregate) error {
+	return s.save(ctx, aggregate)
 }
 
 // endregion

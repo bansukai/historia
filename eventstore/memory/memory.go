@@ -57,13 +57,13 @@ func (e *Memory) SaveEvents(ctx context.Context, events []historia.Event) error 
 }
 
 // GetEvents aggregate events
-func (e *Memory) GetEvents(ctx context.Context, id string, aggregateType string, afterVersion historia.Version) ([]historia.Event, error) {
+func (e *Memory) GetEvents(ctx context.Context, aggregateID string, aggregateType string, afterVersion historia.Version) ([]historia.Event, error) {
 	var events []historia.Event
 
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	for _, event := range e.aggregateEvents[aggregateKey(aggregateType, id)] {
+	for _, event := range e.aggregateEvents[aggregateKey(aggregateType, aggregateID)] {
 		if event.Version > afterVersion {
 			events = append(events, event)
 		}

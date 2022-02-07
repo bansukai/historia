@@ -18,12 +18,12 @@ func Test_NewEventStream_should_return_EventStream(t *testing.T) {
 
 func Test_EventStream_formatAggregatePathName(t *testing.T) {
 	p := formatAggregatePathType(&esAgg{})
-	assert.Equal(t, "github.com/bansukai/historia/esAgg", p)
+	assert.Equal(t, "github.com/bansukai/historia.esAgg", p)
 }
 
 func Test_EventStream_formatAggregatePathNameID(t *testing.T) {
 	p := formatAggregatePathNameID(&esAgg{AggregateBase{id: "yay"}})
-	assert.Equal(t, "github.com/bansukai/historia/esAgg/yay", p)
+	assert.Equal(t, "github.com/bansukai/historia.esAgg#yay", p)
 }
 
 func Test_EventStream_SubscribeAll(t *testing.T) {

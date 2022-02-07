@@ -51,13 +51,13 @@ type Snapper struct {
 	marshaller Marshaller
 }
 
-func (s *Snapper) ApplySnapshot(ctx context.Context, aggregateID string, a Aggregate) error {
-	st, ok := a.(SnapshotTaker)
+func (s *Snapper) ApplySnapshot(ctx context.Context, aggregateID string, aggregate Aggregate) error {
+	st, ok := aggregate.(SnapshotTaker)
 	if !ok {
 		return ErrAggregateDoesntSupportSnapshots
 	}
 
-	t := TypeOf(a)
+	t := TypeOf(aggregate)
 	snap, err := s.store.Get(ctx, aggregateID, t)
 	if err != nil {
 		return err
@@ -72,18 +72,18 @@ func (s *Snapper) ApplySnapshot(ctx context.Context, aggregateID string, a Aggre
 		return err
 	}
 
-	root := a.Root()
+	root := aggregate.Root()
 	root.setInternals(snap.ID, snap.Version)
 	return nil
 }
 
-func (s *Snapper) SaveSnapshot(ctx context.Context, a Aggregate) error {
-	root := a.Root()
+func (s *Snapper) SaveSnapshot(ctx context.Context, aggregate Aggregate) error {
+	root := aggregate.Root()
 	if err := validate(*root); err != nil {
 		return err
 	}
 
-	st, ok := a.(SnapshotTaker)
+	st, ok := aggregate.(SnapshotTaker)
 	if !ok {
 		return ErrAggregateDoesntSupportSnapshots
 	}
@@ -93,7 +93,7 @@ func (s *Snapper) SaveSnapshot(ctx context.Context, a Aggregate) error {
 		return nil
 	}
 
-	typ := TypeOf(a)
+	typ := TypeOf(aggregate)
 	buf, err := s.marshaller.Marshal(payload)
 	if err != nil {
 		return err

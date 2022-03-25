@@ -237,15 +237,14 @@ func updateSpecificAggregate(ctx context.Context, aggregate Aggregate, stream *E
 }
 
 func formatAggregatePathType(aggregate Aggregate) string {
+	root := PathOf(aggregate)
 	name := TypeOf(aggregate)
-	root := aggregate.Root()
-	ref := fmt.Sprintf("%s.%s", root.path(), name)
+	ref := fmt.Sprintf("%s.%s", root, name)
 	return ref
 }
 
 func formatAggregatePathNameID(aggregate Aggregate) string {
-	name := TypeOf(aggregate)
-	root := aggregate.Root()
-	ref := fmt.Sprintf("%s.%s#%s", root.path(), name, root.ID())
+	root := formatAggregatePathType(aggregate)
+	ref := fmt.Sprintf("%s#%s", root, aggregate.Root().ID())
 	return ref
 }

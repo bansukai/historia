@@ -94,7 +94,7 @@ func (r *Repo) Get(ctx context.Context, aggregateID string, aggregate Aggregate)
 
 	// fetch events after the current version of the aggregate that could be fetched from the snapshot store
 	root := aggregate.Root()
-	aggregateType := TypeOf(aggregate)
+	aggregateType := formatAggregatePathType(aggregate)
 	events, err := r.eventStore.GetEvents(ctx, aggregateID, aggregateType, root.Version())
 	if err != nil {
 		if !errors.Is(err, ErrNoEvents) {

@@ -178,7 +178,7 @@ func Test_Snapper_SaveSnapshot_should_call_save_on_snapStore(t *testing.T) {
 		save: func(ctx context.Context, ss *Snapshot) error {
 			assert.Equal(t, agg.ID(), ss.ID)
 			assert.Equal(t, now, ss.Timestamp)
-			assert.Equal(t, "ssAggWithSnapshot", ss.Type)
+			assert.Equal(t, formatAggregatePathType(agg), ss.Type)
 			assert.Equal(t, state, ss.State)
 			assert.Equal(t, agg.Version(), ss.Version)
 			return err

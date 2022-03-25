@@ -57,7 +57,7 @@ func (s *Snapper) ApplySnapshot(ctx context.Context, aggregateID string, aggrega
 		return ErrAggregateDoesntSupportSnapshots
 	}
 
-	t := TypeOf(aggregate)
+	t := formatAggregatePathType(aggregate)
 	snap, err := s.store.Get(ctx, aggregateID, t)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *Snapper) SaveSnapshot(ctx context.Context, aggregate Aggregate) error {
 		return nil
 	}
 
-	typ := TypeOf(aggregate)
+	typ := formatAggregatePathType(aggregate)
 	buf, err := s.marshaller.Marshal(payload)
 	if err != nil {
 		return err

@@ -38,7 +38,7 @@ func Test_AggregateBase_TrackChange_should_add_and_transition_event(t *testing.T
 	e := p.events[0]
 	assert.Equal(t, p.ID(), e.AggregateID)
 	assert.Equal(t, Version(1), e.Version)
-	assert.Equal(t, "aggAgg", e.AggregateType)
+	assert.Equal(t, formatAggregatePathType(&p), e.AggregateType)
 	assert.Equal(t, now, e.Timestamp)
 }
 

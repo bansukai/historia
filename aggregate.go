@@ -79,7 +79,8 @@ func (a *AggregateBase) TrackChangeWithMetadata(aggregate Aggregate, data interf
 		a.id = idFunc()
 	}
 
-	name := TypeOf(aggregate)
+	name := formatAggregatePathType(aggregate)
+
 	event := Event{
 		AggregateID:   a.id,
 		Version:       a.nextVersion(),

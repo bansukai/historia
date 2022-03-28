@@ -55,17 +55,15 @@ func NewEventRegistry(opts ...Option) *EventRegister {
 
 // RegisterAllOf uses the Register method on the DefaultRegistry to register all factories.
 // note: this method will panic if there is an error registering a factory item.
-func RegisterAllOf(items []EventData) error {
-	for _, et := range items {
-		e := et
+func RegisterAllOf(items []EventData) {
+	for i := range items {
+		e := items[i]
 		fn := func() EventData { return e }
 
 		if err := DefaultRegistry.Register(fn); err != nil {
 			panic(err.Error())
 		}
 	}
-
-	return nil
 }
 
 // RegisterEventData uses the DefaultRegistry's Register method to register the factory

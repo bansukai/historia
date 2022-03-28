@@ -24,7 +24,8 @@ var (
 func ValidateEvents(aggregateID string, currentVersion hi.Version, events []hi.Event) error {
 	at := events[0].AggregateType
 
-	for _, event := range events {
+	for i := range events {
+		event := events[i]
 		if event.AggregateID != aggregateID {
 			return ErrEventMultipleAggregates
 		}

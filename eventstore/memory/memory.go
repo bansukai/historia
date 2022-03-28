@@ -63,7 +63,9 @@ func (e *Memory) GetEvents(ctx context.Context, aggregateID string, aggregateTyp
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	for _, event := range e.aggregateEvents[aggregateKey(aggregateType, aggregateID)] {
+	aggEvents := e.aggregateEvents[aggregateKey(aggregateType, aggregateID)]
+	for i := range aggEvents {
+		event := aggEvents[i]
 		if event.Version > afterVersion {
 			events = append(events, event)
 		}

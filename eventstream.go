@@ -49,7 +49,9 @@ func (e *EventStream) Update(ctx context.Context, aggregate Aggregate, events []
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	for _, event := range events {
+	for i := range events {
+		event := events[i]
+
 		// call all functions that has registered for all events
 		if err := updateAll(ctx, e, event); err != nil {
 			return err
@@ -107,7 +109,8 @@ func (e *EventStream) SubscriberSpecificAggregate(f EventHandlerFunc, aggregates
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, a := range aggregates {
+		for x := range aggregates {
+			a := aggregates[x]
 			ref := formatAggregatePathNameID(a)
 			for i, sub := range e.specificAggregates[ref] {
 				if &s == sub {
@@ -121,7 +124,8 @@ func (e *EventStream) SubscriberSpecificAggregate(f EventHandlerFunc, aggregates
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, a := range aggregates {
+		for i := range aggregates {
+			a := aggregates[i]
 			ref := formatAggregatePathNameID(a)
 			e.specificAggregates[ref] = append(e.specificAggregates[ref], &s)
 		}
@@ -138,7 +142,8 @@ func (e *EventStream) SubscriberAggregateType(f EventHandlerFunc, aggregates ...
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, a := range aggregates {
+		for x := range aggregates {
+			a := aggregates[x]
 			ref := formatAggregatePathType(a)
 			for i, sub := range e.aggregateTypes[ref] {
 				if &s == sub {
@@ -152,8 +157,8 @@ func (e *EventStream) SubscriberAggregateType(f EventHandlerFunc, aggregates ...
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, a := range aggregates {
-			ref := formatAggregatePathType(a)
+		for i := range aggregates {
+			ref := formatAggregatePathType(aggregates[i])
 			e.aggregateTypes[ref] = append(e.aggregateTypes[ref], &s)
 		}
 	}
@@ -169,7 +174,8 @@ func (e *EventStream) SubscriberSpecificEvent(f EventHandlerFunc, events ...Even
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, event := range events {
+		for x := range events {
+			event := events[x]
 			t := reflect.TypeOf(event)
 			for i, sub := range e.specificEvents[t] {
 				if &s == sub {
@@ -183,8 +189,8 @@ func (e *EventStream) SubscriberSpecificEvent(f EventHandlerFunc, events ...Even
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
-		for _, event := range events {
-			t := reflect.TypeOf(event)
+		for i := range events {
+			t := reflect.TypeOf(events[i])
 			e.specificEvents[t] = append(e.specificEvents[t], &s)
 		}
 	}
@@ -192,8 +198,8 @@ func (e *EventStream) SubscriberSpecificEvent(f EventHandlerFunc, events ...Even
 }
 
 func updateAll(ctx context.Context, stream *EventStream, event Event) error {
-	for _, s := range stream.allEvents {
-		if err := s.f(ctx, event); err != nil {
+	for i := range stream.allEvents {
+		if err := stream.allEvents[i].f(ctx, event); err != nil {
 			return err
 		}
 	}
@@ -203,8 +209,8 @@ func updateAll(ctx context.Context, stream *EventStream, event Event) error {
 func updateSpecificEvent(ctx context.Context, stream *EventStream, event Event) error {
 	t := reflect.TypeOf(event.Data)
 	if subs, ok := stream.specificEvents[t]; ok {
-		for _, s := range subs {
-			if err := s.f(ctx, event); err != nil {
+		for i := range subs {
+			if err := subs[i].f(ctx, event); err != nil {
 				return err
 			}
 		}
@@ -215,8 +221,8 @@ func updateSpecificEvent(ctx context.Context, stream *EventStream, event Event) 
 func updateSpecificAggregateEvents(ctx context.Context, aggregate Aggregate, stream *EventStream, event Event) error {
 	ref := formatAggregatePathType(aggregate)
 	if subs, ok := stream.aggregateTypes[ref]; ok {
-		for _, s := range subs {
-			if err := s.f(ctx, event); err != nil {
+		for i := range subs {
+			if err := subs[i].f(ctx, event); err != nil {
 				return err
 			}
 		}
@@ -227,8 +233,8 @@ func updateSpecificAggregateEvents(ctx context.Context, aggregate Aggregate, str
 func updateSpecificAggregate(ctx context.Context, aggregate Aggregate, stream *EventStream, event Event) error {
 	ref := formatAggregatePathNameID(aggregate)
 	if subs, ok := stream.specificAggregates[ref]; ok {
-		for _, s := range subs {
-			if err := s.f(ctx, event); err != nil {
+		for i := range subs {
+			if err := subs[i].f(ctx, event); err != nil {
 				return err
 			}
 		}

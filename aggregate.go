@@ -95,7 +95,8 @@ func (a *AggregateBase) TrackChangeWithMetadata(aggregate Aggregate, data interf
 
 // BuildFromHistory builds the aggregate state from events
 func (a *AggregateBase) BuildFromHistory(aggregate Aggregate, events []Event) {
-	for _, event := range events {
+	for i := range events {
+		event := events[i]
 		aggregate.Transition(event)
 		a.id = event.AggregateID
 		a.version = event.Version

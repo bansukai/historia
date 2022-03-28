@@ -10,6 +10,8 @@ import (
 var (
 	ErrFactoryShouldReturnValidPointer = errors.New("the provided factory didn't return a valid pointer")
 	ErrEventDataFactoryNotRegistered   = errors.New("event data factory not registered for this type")
+
+	DefaultRegistry = NewEventRegistry()
 )
 
 type EventRegistry interface {
@@ -49,6 +51,36 @@ func NewEventRegistry(opts ...Option) *EventRegister {
 	}
 
 	return er
+}
+
+// RegisterAllOf uses the Register method on the DefaultRegistry to register all factories.
+// note: this method will panic if there is an error registering a factory item.
+func RegisterAllOf(items []EventData) error {
+	for _, et := range items {
+		e := et
+		fn := func() EventData { return e }
+
+		if err := DefaultRegistry.Register(fn); err != nil {
+			panic(err.Error())
+		}
+	}
+
+	return nil
+}
+
+// RegisterEventData uses the DefaultRegistry's Register method to register the factory
+func RegisterEventData(factory func() EventData) error {
+	return DefaultRegistry.Register(factory)
+}
+
+// UnregisterEventData uses the DefaultRegistry's Unregister method to unregister the factory
+func UnregisterEventData(data EventData) {
+	DefaultRegistry.Unregister(data)
+}
+
+// Create uses the DefaultRegistry's Create method to create the EventData
+func Create(name string) (EventData, error) {
+	return DefaultRegistry.Create(name)
 }
 
 type EventRegister struct {

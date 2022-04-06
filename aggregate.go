@@ -82,6 +82,7 @@ func (a *AggregateBase) TrackChangeWithMetadata(aggregate Aggregate, data interf
 	name := formatAggregatePathType(aggregate)
 
 	event := Event{
+		ID:            NewID(),
 		AggregateID:   a.id,
 		Version:       a.nextVersion(),
 		AggregateType: name,

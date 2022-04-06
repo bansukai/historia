@@ -8,6 +8,11 @@ import (
 // It can be changed from the outside via the SetIDFunc function.
 var idFunc = defaultIDGenerator
 
+// NewID generates a unique id using the configured generator.
+func NewID() string {
+	return idFunc()
+}
+
 // SetIDFunc is used to change how aggregate IDs are generated.
 func SetIDFunc(f func() string) {
 	idFunc = f

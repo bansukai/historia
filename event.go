@@ -16,6 +16,7 @@ type EventMetadata map[string]interface{}
 
 // Event holding metadata and the application specific event in the Data property
 type Event struct {
+	ID            string
 	AggregateID   string
 	AggregateType string
 	Version       Version
